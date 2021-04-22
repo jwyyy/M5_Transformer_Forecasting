@@ -45,7 +45,7 @@ print("re-start a previous training ... ")
 for k in range(epoch):
 
     if k and k % 50 == 0:
-        checkpoint = {'model': Transformer(seq_len, channels, k, dropout),
+        checkpoint = {'model': Transformer(seq_len, channels, conv_k, dropout),
                       'state_dict': model.state_dict(),
                       'optimizer' : optimizer.state_dict()}
         torch.save(checkpoint, str(k)+'_'+'checkpoint_re.pth')
