@@ -1,8 +1,8 @@
 import pandas as pd
 
-dat_valid = pd.read_csv("dataset/sales_train_evaluation.csv")
-dat_eval = pd.read_csv("dataset/sales_train_validation.csv")
-dat_price = pd.read_csv("selling_price_seq.csv")
+dat_eval = pd.read_csv("dataset/sales_train_evaluation.csv")
+dat_valid = pd.read_csv("dataset/sales_train_validation.csv")
+# dat_price = pd.read_csv("selling_price_seq.csv")
 
 seq_valid = dat_valid.iloc[:, 6:]
 seq_eval = dat_eval.iloc[:, 6:]
@@ -13,7 +13,7 @@ seq_eval = dat_eval.iloc[:, 6:]
 CONST_LEN = 28
 
 
-def get_predictor(dat, start):
+def get_predictor(dat):
     n, m = dat.shape
     x = []
     for i in range(n):
@@ -22,6 +22,8 @@ def get_predictor(dat, start):
         x.append(dat.iloc[i, (-4 * CONST_LEN):].tolist())
 
     output_x = pd.DataFrame(x)
+    output_x = pd.concat([dat.iloc[:, :6], output_x], axis=1)
+    output_x.set_index("id", inplace=True)
     return output_x
 
 
@@ -49,23 +51,24 @@ def create_data_set(dat, start):
     return output_x
 
 
-start_ls = dat_price.iloc[:, -1].tolist()
-x = create_data_set(dat=dat_valid, start=start_ls)
-if x is not None:
-    x.to_csv("valid_X.csv", index=False)
-else:
-    print("Error: x is None.")
-
 if False:
-    x_valid = get_predictor(dat=dat_valid, start=start_ls)
-    x_eval = get_predictor(dat=dat_eval, start=start_ls)
+    start_ls = dat_price.iloc[:, -1].tolist()
+    x = create_data_set(dat=dat_valid, start=start_ls)
+    if x is not None:
+        x.to_csv("valid_X.csv", index=False)
+    else:
+        print("Error: x is None.")
+
+if True:
+    x_valid = get_predictor(dat=dat_valid)
+    x_eval = get_predictor(dat=dat_eval)
     if x_valid is not None:
-        x_valid.to_csv("valid_X_pred.csv", index=False)
+        x_valid.to_csv("valid_X_pred.csv", header=False)
     else:
         print("Error: x_valid is None.")
 
     if x_eval is not None:
-        x_eval.to_csv("valid_X_eval.csv", index=False)
+        x_eval.to_csv("eval_X.csv", header=False)
     else:
         print("Error: x_eval is None.")
 

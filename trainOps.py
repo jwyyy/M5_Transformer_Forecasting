@@ -89,6 +89,7 @@ class DataLoader:
         std = self.std_.replace(0.0, 1.0, inplace=False)
         self.mean = mean.tolist()
         std = std.tolist()
+        self.std = std
         self.train_dat = (self.train_dat - mean) / std
         self.train_cat = self.cat.iloc[:self.train_n*batch_size, :]
         # validation dataset
@@ -144,3 +145,27 @@ class DataLoader:
             y = self.test_dat_.iloc[((i - 1) * self.batch_size):(i * self.batch_size), CONST_LEN:]
             # print(l.shape, x.shape, y.shape)
             yield torch.Tensor(l.to_numpy()), torch.Tensor(x.to_numpy()), torch.Tensor(y.to_numpy())
+
+    def get_submission_batch(self, dat):
+        n, _ = dat.shape
+        # get row id
+        dat_id = dat.iloc[:, 0].to_list()
+        # print(dat_id[:5])
+        # get row categorical variables
+        dat_cat = dat.iloc[:, 1:6]
+        # convert categorical variables to dummies
+        cat = pd.concat([pd.get_dummies(dat_cat.iloc[:, j]) for j in range(5)], axis=1)
+        # standardize x
+        x = (dat.iloc[:, 6:] - self.mean[:(4*CONST_LEN)]) / self.std[:(4*CONST_LEN)]
+        # create y
+        dat_y = x.iloc[:, CONST_LEN:]
+        y = pd.concat([dat_y, pd.DataFrame(np.zeros((n, 28)))], axis=1)
+        i = 0
+        while i < n:
+            end = min(i + self.batch_size, n)
+            yield dat_id[i:end], torch.Tensor(cat.iloc[i:end, :].to_numpy()), \
+                  torch.Tensor(x.iloc[i:end, :].to_numpy()), torch.Tensor(y.iloc[i:end, :].to_numpy())
+            i = end + 1
+
+
+
