@@ -52,7 +52,6 @@ for k in range(epoch):
         # print(src.size())
         out = model.forward(cat, src, tar, src_mask, tar_mask)
         # print("train - check out: ", check_tensor([out]))
-        # print(out.size())
         loss = compute_loss(out, tar, tar_mask)
 
         # record training loss history

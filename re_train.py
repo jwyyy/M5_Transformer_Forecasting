@@ -19,7 +19,7 @@ dropout = 0.3
 
 # load model
 # replace x by the epoch number
-checkpoint = torch.load('10_checkpoint.pth')
+checkpoint = torch.load('x_checkpoint.pth')
 model = checkpoint["model"]
 # load model from the checkpoint
 model.load_state_dict(checkpoint["state_dict"])

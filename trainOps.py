@@ -22,7 +22,7 @@ def compute_loss(y, pred, mask):
     # print(pred.size())
     diff = y - pred
     mask = 1 - mask.unsqueeze(-1)
-    return torch.sum(torch.matmul(diff**2, mask)) / (torch.sum(mask) * batch)
+    return torch.sum(torch.matmul(diff.squeeze(1)**2, mask)) / (torch.sum(mask) * batch)
 
 
 def get_mask(seq_len=4*CONST_LEN, random=False):

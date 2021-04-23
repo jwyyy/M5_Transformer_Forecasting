@@ -31,7 +31,7 @@ for i, (cat, x, y) in enumerate(dataLoader.get_test_batch()):
     # send tensors to GPU
     cat, x, y = cat.to(device), x.to(device), y.to(device)
     test_y = model.forward(cat, x, y, src_mask, tar_mask)
-    pred_y.append(test_y * std[CONST_LEN:] + mean[CONST_LEN:])
+    pred_y.append(test_y.squeeze(1) * std[CONST_LEN:] + mean[CONST_LEN:])
     test_loss = compute_loss(test_y, y, tar_mask)
     loss_test.append(test_loss.item())
 

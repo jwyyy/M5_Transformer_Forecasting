@@ -28,4 +28,4 @@ class Transformer(nn.Module):
         # print(d_output.size())
         # predict the full sequence using d_output: (batch, c_out, seq_len)
         output = F.selu(self.out(d_output))
-        return output.squeeze(-1)
+        return output
