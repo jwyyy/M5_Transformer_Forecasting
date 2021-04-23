@@ -18,20 +18,20 @@ for parameter in model.parameters():
 model.eval()
 
 # set random seed if used a non default value
-dataLoader = DataLoader('valid_X.csv', batch_size=512, cat_exist=True, split=(90, 5, 5))
+dataLoader = DataLoader('valid_X.csv', batch_size=512, cat_exist=False, split=(90, 5, 5))
 src_mask, tar_mask = get_mask(4 * CONST_LEN, random=False)
 # send src_mask, tar_mask to GPU
 src_mask, tar_mask = src_mask.to(device), tar_mask.to(device)
 loss_test = []
 pred_y = []
-mean = torch.Tensor(dataLoader.mean)
-std = torch.Tensor(dataLoader.std_)
+mean = torch.Tensor(dataLoader.mean).to(device)
+std = torch.Tensor(dataLoader.std_).to(device)
 for i, (cat, x, y) in enumerate(dataLoader.get_test_batch()):
     # print("test mini-batch ", i)
     # send tensors to GPU
     cat, x, y = cat.to(device), x.to(device), y.to(device)
     test_y = model.forward(cat, x, y, src_mask, tar_mask)
-    pred_y.append(test_y * std[CONST_LEN:] + mean[:, CONST_LEN:])
+    pred_y.append(test_y * std[CONST_LEN:] + mean[CONST_LEN:])
     test_loss = compute_loss(test_y, y, tar_mask)
     loss_test.append(test_loss.item())
 
