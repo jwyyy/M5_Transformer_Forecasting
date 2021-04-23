@@ -19,6 +19,7 @@ def make_prediction(model, dat, src_m, tar_m, datLoader, device):
     for i, (batch_id, cat, x, y) in enumerate(datLoader.get_submission_batch(dat)):
         # print("prediction mini-batch : ", i)
         id.extend(batch_id)
+        cat, x, y = cat.to(device), x.to(device), y.to(device)
         out = model.forward(cat, x, y, src_mask, tar_mask)
         v_out = out.squeeze(1) * std[CONST_LEN:] + mean[CONST_LEN:]
         flag = torch.round(v_out) > 0
