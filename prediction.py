@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from trainOps import DataLoader, compute_loss, get_mask
+from trainOps import DataLoader, compute_loss, get_mask, compute_prediction_loss
 
 # set up GPU
 device = torch.device("cpu")
@@ -43,7 +43,9 @@ for i, (cat, x, y) in enumerate(dataLoader.get_original_test_batch()):
     # print("test mini-batch ", i)
     # send tensors to GPU
     _, _, y = cat.to(device), x.to(device), y.to(device)
-    loss_pred.append(compute_loss(pred_y[i], y, tar_mask).item())
+    flag = torch.round(pred_y[i]) > 0
+    y_ = flag * torch.ceil(pred_y[i])
+    loss_pred.append(compute_prediction_loss(y_, y, tar_mask).item())
 
 print("Original test dataset loss : ", np.mean(loss_pred))
 
