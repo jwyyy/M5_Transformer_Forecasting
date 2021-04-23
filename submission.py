@@ -24,7 +24,7 @@ def make_prediction(model, dat, src_m, tar_m, datLoader, device):
         v_out = out.squeeze(1) * std[CONST_LEN:] + mean[CONST_LEN:]
         flag = torch.round(v_out) > 0
         v_out = flag * torch.ceil(v_out)
-        v_out = v_out.numpy()
+        v_out = v_out.cpu().numpy()
         v_out = v_out[:, -CONST_LEN:]
         pred.extend(v_out.tolist())
     # print(id[:5])
@@ -47,6 +47,7 @@ def load_model(checkpoint_path):
 # set up GPU
 device = torch.device("cuda:1")
 model = load_model("30_checkpoint.pth")
+print("Model load ...")
 
 dataLoader = DataLoader('valid_X.csv', batch_size=512, cat_exist=False, split=(96, 2, 2))
 src_mask, tar_mask = get_mask(4 * CONST_LEN, random=False)
