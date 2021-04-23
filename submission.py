@@ -26,6 +26,8 @@ def make_prediction(model, dat, src_m, tar_m, datLoader, device):
         v_out = flag * torch.ceil(v_out)
         v_out = v_out.cpu().numpy()
         v_out = v_out[:, -CONST_LEN:]
+        # print(v_out[1, 1:])
+        # print("=====")
         pred.extend(v_out.tolist())
     # print(id[:5])
     output = pd.DataFrame(pred, index=id, columns=["F"+str(i) for i in range(1, 29)])
@@ -45,11 +47,11 @@ def load_model(checkpoint_path):
 
 
 # set up GPU
-device = torch.device("cuda:1")
-model = load_model("30_checkpoint.pth")
-print("Model load ...")
+device = torch.device("cpu")
+model = load_model("10_checkpoint.pth")
+print("Model loaded ...")
 
-dataLoader = DataLoader('valid_X.csv', batch_size=512, cat_exist=False, split=(96, 2, 2))
+dataLoader = DataLoader('small_X.csv', batch_size=16, cat_exist=True, split=(90, 5, 5))
 src_mask, tar_mask = get_mask(4 * CONST_LEN, random=False)
 
 print("validation set loaded ...")
@@ -63,5 +65,5 @@ eval_pred = make_prediction(model, dat_, src_mask, tar_mask, dataLoader, device)
 print("evaluation set prediction done ...")
 
 output = pd.concat([valid_pred, eval_pred], axis=0)
-output.to_csv("prediction.csv")
+output.to_csv("prediction_.csv")
 

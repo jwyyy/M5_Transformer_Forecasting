@@ -53,6 +53,8 @@ class CatDecoder(nn.Module):
 
     def forward(self, x, e_output, src_mask, tar_mask):
         cat_, x_ = x[0], x[1]
+        # mask future observations to avoid peeking
+        x_.masked_fill_(tar_mask == 0, 0)
         x_cat = self.cat_embed(cat_)
         x_ = self.layers[0](x_, e_output, src_mask, tar_mask) + x_cat
         for i in range(1, len(self.layers)):
