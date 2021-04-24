@@ -50,6 +50,7 @@ for i, (cat, x, y) in enumerate(dataLoader.get_original_test_batch()):
     loss_pred.append(compute_prediction_loss(y_, y, tar_mask).item())
     if i % 24 == 0:
         print("A few checks ...")
+        print(pred_y[i][1, -CONST_LEN:])
         print(y[1, -CONST_LEN:])
         print(y_[1, -CONST_LEN:])
         print("============================")

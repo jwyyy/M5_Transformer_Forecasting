@@ -4,18 +4,33 @@ import matplotlib.pyplot as plt
 
 from torch.optim import Adam
 from Model import Transformer
-from trainOps import compute_loss, DataLoader, get_mask, create_small_dataset, check_tensor
+from trainOps import DataLoader, get_mask, create_small_dataset, check_tensor, compute_prediction_loss
 
 # torch.autograd.set_detect_anomaly(True)
 # set up GPU
 device = torch.device("cpu")
 
+# training configuration
+epoch = 50
+save_model_every = 25
+data_split = (90, 5, 5)
+random_mask = True
+if True:
+    data_input = 'small_X.csv'
+    batch_size = 16
+    cat_exist = True
+else:
+    data_input = 'valid_X.csv'
+    batch_size = 512
+    cat_exist = False
+
+
 # model configuration
 CONST_LEN = 28
 seq_len = 28 * 4
-channels = [5, 5, 5]
+channels = [8, 8, 8, 8]
 conv_k = 5
-dropout = 0.3
+dropout = 0.5
 model = Transformer(seq_len, channels, conv_k, dropout)
 # send model to GPU
 model.to(device)
@@ -23,18 +38,14 @@ model.to(device)
 # training code
 loss_train_history = []
 loss_valid_history = []
-epoch = 50
+
 optimizer = Adam(model.parameters(), lr=3e-4)
 # create_small_dataset(data_file="valid_X.csv", csv_name="small_X.csv")
-dataLoader = DataLoader('small_X.csv', batch_size=16, cat_exist=True, split=(90, 5, 5))
-
-src_mask, tar_mask = get_mask(4 * CONST_LEN, random=False)
-# send src_mask, tar_mask to GPU
-src_mask, tar_mask = src_mask.to(device), tar_mask.to(device)
+dataLoader = DataLoader(data_input, batch_size, cat_exist, data_split)
 
 for k in range(epoch):
 
-    if k and k % 10 == 0:
+    if k and k % save_model_every == 0:
         checkpoint = {'model': Transformer(seq_len, channels, conv_k, dropout),
                       'state_dict': model.state_dict(),
                       'optimizer' : optimizer.state_dict()}
@@ -45,6 +56,9 @@ for k in range(epoch):
     # set model training state
     model.train()
     for i, (cat, src, tar) in enumerate(dataLoader.get_training_batch()):
+        src_mask, tar_mask = get_mask(4 * CONST_LEN, random_mask)
+        # send src_mask, tar_mask to GPU
+        src_mask, tar_mask = src_mask.to(device), tar_mask.to(device)
         # print("train mini-batch ", i)
         # send tensors to GPU
         # print("train - check input: ", check_tensor([cat, src, tar]))
@@ -52,7 +66,7 @@ for k in range(epoch):
         # print(src.size())
         out = model.forward(cat, src, tar, src_mask, tar_mask)
         # print("train - check out: ", check_tensor([out]))
-        loss = compute_loss(out, tar, tar_mask)
+        loss = compute_prediction_loss(out, tar, None)
 
         # record training loss history
         loss_train.append(loss.item())
@@ -64,6 +78,10 @@ for k in range(epoch):
 
     loss_train_history.append(np.mean(loss_train))
 
+    v_src_mask, v_tar_mask = get_mask(4 * CONST_LEN, random=False)
+    # send src_mask, tar_mask to GPU
+    valid_src_mask, valid_tar_mask = v_src_mask.to(device), v_tar_mask.to(device)
+
     # model evaluation mode
     loss_valid = []
     with torch.no_grad():
@@ -73,8 +91,8 @@ for k in range(epoch):
             # send tensors to GPU
             # print("validation - check input: ", check_tensor([cat, src, tar]))
             cat, x, y = cat.to(device), x.to(device), y.to(device)
-            valid_y = model.forward(cat, x, y, src_mask, tar_mask)
-            valid_loss = compute_loss(valid_y, y, tar_mask)
+            valid_y = model.forward(cat, x, y, valid_src_mask, valid_tar_mask)
+            valid_loss = compute_prediction_loss(valid_y, y, None)
             # print("valid - check out: ", check_tensor([valid_loss]))
             loss_valid.append(valid_loss.item())
 

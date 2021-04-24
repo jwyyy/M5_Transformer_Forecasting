@@ -17,21 +17,25 @@ def check_tensor(tensor_ls):
 
 
 def compute_loss(y, pred, mask):
-    batch = y.size(0)
     # print(y.size())
     # print(pred.size())
-    diff = y - pred
+    diff = (y - pred).squeeze(1)
+    batch, seq_len = diff.size()
+    if mask is None:
+        return torch.sum(diff**2) / (batch * seq_len)
     mask = 1 - mask.unsqueeze(-1)
-    return torch.sum(torch.matmul(diff.squeeze(1)**2, mask)) / batch
+    return torch.sum(torch.matmul(diff**2, mask)) / (batch * torch.sum(mask))
 
 
 def compute_prediction_loss(y, pred, mask):
-    batch = y.size(0)
     # print(y.size())
     # print(pred.size())
-    diff = torch.abs(y - pred)
+    diff = torch.abs(y - pred).squeeze(1)
+    batch, seq_len = diff.size()
+    if mask is None:
+        return torch.sum(diff) / (batch * seq_len)
     mask = 1 - mask.unsqueeze(-1)
-    return torch.sum(torch.matmul(diff, mask)) / batch
+    return torch.sum(torch.matmul(diff, mask)) / (batch * torch.sum(mask))
 
 
 def get_mask(seq_len=4*CONST_LEN, random=False):
@@ -40,7 +44,7 @@ def get_mask(seq_len=4*CONST_LEN, random=False):
     if not random:
         tar_mask[-CONST_LEN:] = [0] * CONST_LEN
     else:
-        pos = randint(0, seq_len-1, size=1)
+        pos = randint(0, seq_len-1)
         tar_mask[pos:] = [0] * (seq_len - pos)
     return torch.Tensor(src_mask), torch.Tensor(tar_mask)
 
@@ -58,7 +62,7 @@ def create_small_dataset(data_file, csv_name="small_X.csv", size=1000):
 
 
 class DataLoader:
-    def __init__(self, data_file, batch_size=10, cat_exist=False, split=(8, 1, 1), random_seed=12034):
+    def __init__(self, data_file, batch_size=10, cat_exist=False, split=(8, 1, 1), random_seed=10234):
 
         dat = pd.read_csv(data_file)
         self.n, _ = dat.shape
