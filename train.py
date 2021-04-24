@@ -8,14 +8,14 @@ from trainOps import DataLoader, get_mask, create_small_dataset, check_tensor, c
 
 # torch.autograd.set_detect_anomaly(True)
 # set up GPU
-device = torch.device("cpu")
+device = torch.device("cuda:0")
 
 # training configuration
-epoch = 50
+epoch = 100
 save_model_every = 25
-data_split = (90, 5, 5)
+data_split = (96, 2, 2)
 random_mask = True
-if True:
+if False:
     data_input = 'small_X.csv'
     batch_size = 16
     cat_exist = True
@@ -23,6 +23,7 @@ else:
     data_input = 'valid_X.csv'
     batch_size = 512
     cat_exist = False
+    print("training on the full dataset ...")
 
 
 # model configuration
@@ -42,6 +43,10 @@ loss_valid_history = []
 optimizer = Adam(model.parameters(), lr=3e-4)
 # create_small_dataset(data_file="valid_X.csv", csv_name="small_X.csv")
 dataLoader = DataLoader(data_input, batch_size, cat_exist, data_split)
+
+v_src_mask, v_tar_mask = get_mask(4 * CONST_LEN, random=False)
+# send src_mask, tar_mask to GPU
+valid_src_mask, valid_tar_mask = v_src_mask.to(device), v_tar_mask.to(device)
 
 for k in range(epoch):
 
@@ -77,10 +82,6 @@ for k in range(epoch):
         optimizer.step()
 
     loss_train_history.append(np.mean(loss_train))
-
-    v_src_mask, v_tar_mask = get_mask(4 * CONST_LEN, random=False)
-    # send src_mask, tar_mask to GPU
-    valid_src_mask, valid_tar_mask = v_src_mask.to(device), v_tar_mask.to(device)
 
     # model evaluation mode
     loss_valid = []
