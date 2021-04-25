@@ -21,7 +21,7 @@ class DecoderLayer(nn.Module):
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
-        self.broadcast1 = nn.Conv1d(c_in, c_out, kernel_size=1, bias=False)
+        self.broadcast1 = nn.Conv1d(c_in, c_out, kernel_size=1, bias=True)
         self.broadcast2 = nn.Linear(seq_len, seq_len)
 
     def forward(self, x, e_output, src_mask, tar_mask):

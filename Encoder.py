@@ -11,8 +11,9 @@ class EncoderLayer(nn.Module):
         super().__init__()
         self.norm1 = Norm(c_out)
         self.norm2 = Norm(c_out)
+        self.norm3 = Norm(c_out)
         self.attn = Attention(seq_len, c_in=c_out, c_out=c_out, k=k)
-        self.broadcast = nn.Conv1d(c_in, c_out, kernel_size=1, stride=1)
+        self.broadcast = nn.Conv1d(c_in, c_out, kernel_size=1, stride=1, bias=True)
         self.ff = FeedForward(c_out, c_out)
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
@@ -27,7 +28,7 @@ class EncoderLayer(nn.Module):
         x2 = self.norm2(x)
         # print(x2.size())
         x = x + self.dropout2(self.ff(x2.transpose(-1, -2))).transpose(-1, -2)
-        return x
+        return self.norm3(x)
 
 
 class CatEncoder(nn.Module):
