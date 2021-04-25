@@ -12,8 +12,8 @@ def make_prediction(model, dat, src_m, tar_m, datLoader, device):
     model.eval()
     # send tensors to GPU
     src_mask, tar_mask = src_m.to(device), tar_m.to(device)
-    mean = torch.Tensor(datLoader.mean).to(device)
-    std = torch.Tensor(dataLoader.std_).to(device)
+    mu = torch.Tensor(datLoader.mu).to(device)
+    scale = torch.Tensor(dataLoader.scale).to(device)
     id = []
     pred = []
     for i, (batch_id, cat, x, y) in enumerate(datLoader.get_submission_batch(dat)):
@@ -21,7 +21,7 @@ def make_prediction(model, dat, src_m, tar_m, datLoader, device):
         id.extend(batch_id)
         cat, x, y = cat.to(device), x.to(device), y.to(device)
         out = model.forward(cat, x, y, src_mask, tar_mask)
-        v_out = out.squeeze(1) * std[CONST_LEN:] + mean[CONST_LEN:]
+        v_out = out.squeeze(1) * scale[CONST_LEN:] + mu[CONST_LEN:]
         flag = torch.round(v_out) > 0
         v_out = flag * torch.ceil(v_out)
         v_out = v_out.cpu().numpy()

@@ -1,7 +1,7 @@
 import torch
 import pandas as pd
 import numpy as np
-from numpy.random import randint, shuffle
+from numpy.random import randint
 
 CONST_LEN = 28
 CONST_CAT_DIM = 3049+7+3+10+3
@@ -16,10 +16,10 @@ def check_tensor(tensor_ls):
     return "okay"
 
 
-def compute_loss(y, pred, mask):
+def compute_loss(y, pred, scale, mask):
     # print(y.size())
     # print(pred.size())
-    diff = (y - pred).squeeze(1)
+    diff = (y - pred).squeeze(1) * scale
     batch, seq_len = diff.size()
     if mask is None:
         return torch.sum(diff**2) / (batch * seq_len)
@@ -27,10 +27,10 @@ def compute_loss(y, pred, mask):
     return torch.sum(torch.matmul(diff**2, mask)) / (batch * torch.sum(mask))
 
 
-def compute_prediction_loss(y, pred, mask):
+def compute_prediction_loss(y, pred, scale, mask):
     # print(y.size())
     # print(pred.size())
-    diff = torch.abs(y - pred).squeeze(1)
+    diff = torch.abs(y - pred).squeeze(1) * scale
     batch, seq_len = diff.size()
     if mask is None:
         return torch.sum(diff) / (batch * seq_len)
@@ -78,7 +78,9 @@ class DataLoader:
         # categorical variables, numerical variables
         # set a random_seed to memorize train/valid/test split
         np.random.seed(random_seed)
-        dat = dat.sample(frac=1).reset_index(drop=True)
+        _order = list(range(self.n))
+        np.random.shuffle(_order)
+        dat = dat.iloc[_order, :]
         if not cat_exist:
             cat, self.dat = dat.iloc[:, :5], dat.iloc[:, 5:]
             self.cat = pd.concat([pd.get_dummies(cat.iloc[:, j]) for j in range(5)], axis=1)
@@ -87,22 +89,24 @@ class DataLoader:
 
         assert self.cat.shape[1] == CONST_CAT_DIM
 
-        self.train_dat = self.dat.iloc[:self.train_n*batch_size, :]
-        mean = self.train_dat.mean(axis=0)
-        self.std_ = self.train_dat.std(axis=0)
-        std = self.std_.replace(0.0, 1.0, inplace=False)
-        self.mean = mean.tolist()
-        std = std.tolist()
-        self.std = std
-        self.train_dat = (self.train_dat - mean) / std
+        self.train_dat_ = self.dat.iloc[:self.train_n*batch_size, :]
+        self.valid_dat_ = self.dat.iloc[self.train_n * batch_size:(self.train_n + self.valid_n) * batch_size, :]
+        self.test_dat_ = self.dat.iloc[(self.train_n + self.valid_n) * batch_size:, :]
+        # scaling
+        mu = self.train_dat_.median(axis=0)
+        self.mu = mu.tolist()
+        scale = self.train_dat_.max(axis=0) - self.train_dat_.min(axis=0)
+        scale.replace(0, 1.0, inplace=True)
+        self.scale = scale.tolist()
+
+        # training dataset
+        self.train_dat = (self.train_dat_ - mu) / scale
         self.train_cat = self.cat.iloc[:self.train_n*batch_size, :]
         # validation dataset
-        self.valid_dat = self.dat.iloc[self.train_n*batch_size:(self.train_n + self.valid_n)*batch_size, :]
-        self.valid_dat = (self.valid_dat - mean) / std
+        self.valid_dat = (self.valid_dat_ - mu) / scale
         self.valid_cat = self.cat.iloc[self.train_n*batch_size:(self.train_n + self.valid_n)*batch_size, :]
         # test dataset
-        self.test_dat_ = self.dat.iloc[(self.train_n + self.valid_n)*batch_size:, :]
-        self.test_dat = (self.test_dat_ - mean) / std
+        self.test_dat = (self.test_dat_ - mu) / scale
         self.test_cat = self.cat.iloc[(self.train_n + self.valid_n)*batch_size:, :]
         # print(self.train_n, self.valid_n, self.test_n)
 
@@ -110,7 +114,7 @@ class DataLoader:
         # training dataset
         train_size = self.train_dat.shape[0]
         new_order = list(range(train_size))
-        shuffle(new_order)
+        np.random.shuffle(new_order)
         self.train_dat = self.train_dat.iloc[new_order, :]
         self.train_cat = self.train_cat.iloc[new_order, :]
 
@@ -160,7 +164,7 @@ class DataLoader:
         # convert categorical variables to dummies
         cat = pd.concat([pd.get_dummies(dat_cat.iloc[:, j]) for j in range(5)], axis=1)
         # standardize x
-        x = (dat.iloc[:, 6:] - self.mean[:(4*CONST_LEN)]) / self.std[:(4*CONST_LEN)]
+        x = (dat.iloc[:, 6:] - self.mu[:(4*CONST_LEN)]) / self.scale[:(4*CONST_LEN)]
         # create y
         dat_y = x.iloc[:, CONST_LEN:]
         y = pd.concat([dat_y, pd.DataFrame(np.zeros((n, 28)))], axis=1)
