@@ -55,9 +55,10 @@ for k in range(epoch):
         torch.save(checkpoint, str(k)+'_'+'checkpoint.pth')
 
     loss_train = []
+    loss_valid = []
     dataLoader.shuffle()
-    # set model training state
     model.train()
+    # set model training state
     for i, (cat, src, tar) in enumerate(dataLoader.get_training_batch()):
         src_mask, tar_mask = get_mask(4 * CONST_LEN, random_mask)
         # send src_mask, tar_mask to GPU
@@ -74,19 +75,21 @@ for k in range(epoch):
         # record training loss history
         loss_train.append(loss.item())
 
-        if i % 100 == 0:
-            print("training mini-batch ", i,
-                  "loss =", loss.item())
-
         # update parameters using backpropagation
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
+        if i % 100 == 0:
+            print("training mini-batch ", i,
+                  "loss =", loss.item())
+
     loss_train_history.append(np.mean(loss_train))
 
+    print("last training mini-batch loss  =", loss_train[-1])
+
     # model evaluation mode
-    loss_valid = []
+
     with torch.no_grad():
         model.eval()
         for i, (cat, x, y) in enumerate(dataLoader.get_validation_batch()):
