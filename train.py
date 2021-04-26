@@ -8,14 +8,14 @@ from trainOps import DataLoader, get_mask, create_small_dataset, check_tensor, c
 
 # torch.autograd.set_detect_anomaly(True)
 # set up GPU
-device = torch.device("cuda:0")
+device = torch.device("cpu")
 
 # training configuration
 epoch = 100
 save_model_every = 25
 data_split = (90, 5, 5)
 random_mask = True
-if False:
+if True:
     data_input = 'small_X.csv'
     batch_size = 16
     cat_exist = True

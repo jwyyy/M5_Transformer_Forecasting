@@ -19,7 +19,7 @@ def check_tensor(tensor_ls):
 def compute_loss(y, pred, scale, mask):
     # print(y.size())
     # print(pred.size())
-    diff = (y - pred).squeeze(1) * scale
+    diff = (y - pred) * scale
     batch, seq_len = diff.size()
     if mask is None:
         return torch.sum(diff**2) / (batch * seq_len)
@@ -30,7 +30,7 @@ def compute_loss(y, pred, scale, mask):
 def compute_prediction_loss(y, pred, scale, mask):
     # print(y.size())
     # print(pred.size())
-    diff = torch.abs(y - pred).squeeze(1) * scale
+    diff = torch.abs(y - pred) * scale
     batch, seq_len = diff.size()
     if mask is None:
         return torch.sum(diff) / (batch * seq_len)
@@ -90,7 +90,7 @@ class DataLoader:
         assert self.cat.shape[1] == CONST_CAT_DIM
 
         self.train_dat_ = self.dat.iloc[:self.train_n*batch_size, :]
-        self.valid_dat_ = self.dat.iloc[self.train_n * batch_size:(self.train_n + self.valid_n) * batch_size, :]
+        self.valid_dat_ = self.dat.iloc[(self.train_n * batch_size):(self.train_n + self.valid_n) * batch_size, :]
         self.test_dat_ = self.dat.iloc[(self.train_n + self.valid_n) * batch_size:, :]
         # scaling
         mu = self.train_dat_.median(axis=0)
@@ -101,10 +101,10 @@ class DataLoader:
 
         # training dataset
         self.train_dat = (self.train_dat_ - mu) / scale
-        self.train_cat = self.cat.iloc[:self.train_n*batch_size, :]
+        self.train_cat = self.cat.iloc[:(self.train_n*batch_size), :]
         # validation dataset
         self.valid_dat = (self.valid_dat_ - mu) / scale
-        self.valid_cat = self.cat.iloc[self.train_n*batch_size:(self.train_n + self.valid_n)*batch_size, :]
+        self.valid_cat = self.cat.iloc[(self.train_n*batch_size):(self.train_n + self.valid_n)*batch_size, :]
         # test dataset
         self.test_dat = (self.test_dat_ - mu) / scale
         self.test_cat = self.cat.iloc[(self.train_n + self.valid_n)*batch_size:, :]
