@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -54,7 +55,7 @@ class CatDecoder(nn.Module):
     def forward(self, x, e_output, src_mask, tar_mask):
         cat_, x_ = x[0], x[1]
         # mask future observations to avoid peeking
-        x_.masked_fill_(tar_mask == 0, 0)
+        x_ = x_ * tar_mask
         x_cat = self.cat_embed(cat_)
         # only mask last 28 observations at the first decoder layer
         x_ = self.layers[0](x_, e_output, src_mask, tar_mask) + x_cat
