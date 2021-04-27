@@ -40,7 +40,7 @@ model.to(device)
 loss_train_history = []
 loss_valid_history = []
 
-optimizer = Adam(model.parameters(), lr=1e-5)
+optimizer = Adam(model.parameters(), lr=3e-4)
 # create_small_dataset(data_file="valid_X.csv", csv_name="small_X.csv")
 dataLoader = DataLoader(data_input, batch_size, cat_exist, data_split)
 scale = torch.Tensor(dataLoader.scale)
@@ -98,13 +98,13 @@ for k in range(epoch):
             valid_loss = compute_prediction_loss(valid_y, y, scale[CONST_LEN:], valid_tar_mask)
             loss_valid.append(valid_loss.item())
 
-    loss_valid_history.append(np.mean(loss_valid))
-
     if len(loss_valid_history) and np.mean(loss_valid) < loss_valid_history[-1]:
         checkpoint = {'model': Transformer(seq_len, channels, conv_k, dropout),
                       'state_dict': model.state_dict(),
                       'optimizer': optimizer.state_dict()}
         torch.save(checkpoint, 'best_' + 'checkpoint.pth')
+
+    loss_valid_history.append(np.mean(loss_valid))
 
     print("epoch:", k,
           "training loss = ", loss_train_history[-1],
