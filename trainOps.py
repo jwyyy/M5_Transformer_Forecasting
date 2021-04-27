@@ -93,9 +93,9 @@ class DataLoader:
         self.valid_dat_ = self.dat.iloc[(self.train_n * batch_size):(self.train_n + self.valid_n) * batch_size, :]
         self.test_dat_ = self.dat.iloc[(self.train_n + self.valid_n) * batch_size:, :]
         # scaling
-        mu = self.train_dat_.median(axis=0)
+        mu = self.train_dat_.mean(axis=0)
         self.mu = mu.tolist()
-        scale = self.train_dat_.max(axis=0) - self.train_dat_.min(axis=0)
+        scale = self.train_dat_.std(axis=0)
         scale.replace(0, 1.0, inplace=True)
         self.scale = scale.tolist()
 

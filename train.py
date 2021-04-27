@@ -8,14 +8,14 @@ from trainOps import DataLoader, get_mask, create_small_dataset, check_tensor, c
 
 # torch.autograd.set_detect_anomaly(True)
 # set up GPU
-device = torch.device("cpu")
+device = torch.device("cuda:0")
 
 # training configuration
-epoch = 100
+epoch = 75
 save_model_every = 25
-data_split = (90, 5, 5)
-random_mask = True
-if True:
+data_split = (96, 2, 2)
+random_mask = False
+if False:
     data_input = 'small_X.csv'
     batch_size = 16
     cat_exist = True
@@ -40,7 +40,7 @@ model.to(device)
 loss_train_history = []
 loss_valid_history = []
 
-optimizer = Adam(model.parameters(), lr=1e-4)
+optimizer = Adam(model.parameters(), lr=1e-5)
 # create_small_dataset(data_file="valid_X.csv", csv_name="small_X.csv")
 dataLoader = DataLoader(data_input, batch_size, cat_exist, data_split)
 scale = torch.Tensor(dataLoader.scale)
@@ -63,14 +63,10 @@ for k in range(epoch):
         src_mask, tar_mask = get_mask(4 * CONST_LEN, random_mask)
         # send src_mask, tar_mask to GPU
         src_mask, tar_mask = src_mask.to(device), tar_mask.to(device)
-        # print("train mini-batch ", i)
         # send tensors to GPU
-        # print("train - check input: ", check_tensor([cat, src, tar]))
         cat, src, tar = cat.to(device), src.to(device), tar.to(device)
-        # print(src.size())
         out = model.forward(cat, src, tar, src_mask, tar_mask)
-        # print("train - check out: ", check_tensor([out]))
-        loss = compute_loss(out, tar, scale[CONST_LEN:], tar_mask)
+        loss = compute_prediction_loss(out, tar, scale[CONST_LEN:], tar_mask)
 
         # record training loss history
         loss_train.append(loss.item())
@@ -97,20 +93,23 @@ for k in range(epoch):
             v_src_mask, v_tar_mask = get_mask(4 * CONST_LEN, random=random_mask)
             # send src_mask, tar_mask to GPU
             valid_src_mask, valid_tar_mask = v_src_mask.to(device), v_tar_mask.to(device)
-            # print("validation mini-batch ", i)
-            # send tensors to GPU
-            # print("validation - check input: ", check_tensor([cat, src, tar]))
             cat, x, y = cat.to(device), x.to(device), y.to(device)
             valid_y = model.forward(cat, x, y, valid_src_mask, valid_tar_mask)
-            valid_loss = compute_loss(valid_y, y, scale[CONST_LEN:], valid_tar_mask)
-            # print("valid - check out: ", check_tensor([valid_loss]))
+            valid_loss = compute_prediction_loss(valid_y, y, scale[CONST_LEN:], valid_tar_mask)
             loss_valid.append(valid_loss.item())
 
     loss_valid_history.append(np.mean(loss_valid))
 
+    if len(loss_valid_history) and np.mean(loss_valid) < loss_valid_history[-1]:
+        checkpoint = {'model': Transformer(seq_len, channels, conv_k, dropout),
+                      'state_dict': model.state_dict(),
+                      'optimizer': optimizer.state_dict()}
+        torch.save(checkpoint, 'best_' + 'checkpoint.pth')
+
     print("epoch:", k,
           "training loss = ", loss_train_history[-1],
           "validation loss = ", loss_valid_history[-1])
+
 
 plt.plot(list(range(1, epoch+1)), loss_train_history, label='train')
 plt.plot(list(range(1, epoch+1)), loss_valid_history, label='valid')
