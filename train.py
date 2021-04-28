@@ -15,9 +15,10 @@ epoch = 75
 save_model_every = 25
 data_split = (96, 2, 2)
 random_mask = False
-if False:
+if True:
+    # create_small_dataset(data_file="train_X.csv", csv_name="small_X.csv")
     data_input = 'small_X.csv'
-    batch_size = 16
+    batch_size = 8
     cat_exist = True
 else:
     data_input = 'valid_X.csv'
@@ -29,7 +30,7 @@ else:
 # model configuration
 CONST_LEN = 28
 seq_len = 28 * 8
-channels = [8, 8, 8, 8]
+channels = [8]
 conv_k = 7
 dropout = 0.3
 model = Transformer(seq_len, channels, conv_k, dropout)
@@ -41,7 +42,6 @@ loss_train_history = []
 loss_valid_history = []
 
 optimizer = Adam(model.parameters(), lr=3e-4)
-# create_small_dataset(data_file="valid_X.csv", csv_name="small_X.csv")
 dataLoader = DataLoader(data_input, batch_size, cat_exist, data_split)
 scale = torch.Tensor(dataLoader.scale)
 scale = scale.to(device)
@@ -95,7 +95,7 @@ for k in range(epoch):
             # valid_src_mask, valid_tar_mask = v_src_mask.to(device), v_tar_mask.to(device)
             cat, x, y = cat.to(device), x.to(device), y.to(device)
             valid_y = model.forward(cat, x, y, src_mask, tar_mask)
-            valid_loss = compute_prediction_loss(valid_y, y, scale[CONST_LEN:], valid_tar_mask)
+            valid_loss = compute_prediction_loss(valid_y, y, scale[CONST_LEN:], tar_mask)
             loss_valid.append(valid_loss.item())
 
     if len(loss_valid_history) and np.mean(loss_valid) < loss_valid_history[-1]:

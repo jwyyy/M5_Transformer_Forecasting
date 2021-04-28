@@ -21,7 +21,7 @@ model.eval()
 
 # set random seed if used a non default value
 dataLoader = DataLoader('valid_X.csv', batch_size=512, cat_exist=False, split=(96, 2, 2))
-src_mask, tar_mask = get_mask(4 * CONST_LEN, random=False)
+src_mask, tar_mask = get_mask(8 * CONST_LEN, random=False)
 # send src_mask, tar_mask to GPU
 src_mask, tar_mask = src_mask.to(device), tar_mask.to(device)
 loss_test = []
