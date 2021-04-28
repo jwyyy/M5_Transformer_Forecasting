@@ -28,9 +28,9 @@ else:
 
 # model configuration
 CONST_LEN = 28
-seq_len = 28 * 4
+seq_len = 28 * 8
 channels = [8, 8, 8, 8]
-conv_k = 5
+conv_k = 7
 dropout = 0.3
 model = Transformer(seq_len, channels, conv_k, dropout)
 # send model to GPU
