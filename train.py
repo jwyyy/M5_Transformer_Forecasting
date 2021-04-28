@@ -46,6 +46,10 @@ dataLoader = DataLoader(data_input, batch_size, cat_exist, data_split)
 scale = torch.Tensor(dataLoader.scale)
 scale = scale.to(device)
 
+src_mask, tar_mask = get_mask(seq_len, random_mask)
+# send src_mask, tar_mask to GPU
+src_mask, tar_mask = src_mask.to(device), tar_mask.to(device)
+
 for k in range(epoch):
 
     if k and k % save_model_every == 0:
@@ -60,14 +64,10 @@ for k in range(epoch):
     model.train()
     # set model training state
     for i, (cat, src, tar) in enumerate(dataLoader.get_training_batch()):
-        src_mask, tar_mask = get_mask(4 * CONST_LEN, random_mask)
-        # send src_mask, tar_mask to GPU
-        src_mask, tar_mask = src_mask.to(device), tar_mask.to(device)
         # send tensors to GPU
         cat, src, tar = cat.to(device), src.to(device), tar.to(device)
         out = model.forward(cat, src, tar, src_mask, tar_mask)
         loss = compute_prediction_loss(out, tar, scale[CONST_LEN:], tar_mask)
-
         # record training loss history
         loss_train.append(loss.item())
 
@@ -90,11 +90,11 @@ for k in range(epoch):
         model.eval()
         for i, (cat, x, y) in enumerate(dataLoader.get_validation_batch()):
             # get validation masks
-            v_src_mask, v_tar_mask = get_mask(4 * CONST_LEN, random=random_mask)
+            # v_src_mask, v_tar_mask = get_mask(seq_len, random=random_mask)
             # send src_mask, tar_mask to GPU
-            valid_src_mask, valid_tar_mask = v_src_mask.to(device), v_tar_mask.to(device)
+            # valid_src_mask, valid_tar_mask = v_src_mask.to(device), v_tar_mask.to(device)
             cat, x, y = cat.to(device), x.to(device), y.to(device)
-            valid_y = model.forward(cat, x, y, valid_src_mask, valid_tar_mask)
+            valid_y = model.forward(cat, x, y, src_mask, tar_mask)
             valid_loss = compute_prediction_loss(valid_y, y, scale[CONST_LEN:], valid_tar_mask)
             loss_valid.append(valid_loss.item())
 

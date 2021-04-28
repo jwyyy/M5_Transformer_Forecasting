@@ -122,7 +122,7 @@ class DataLoader:
 
         for i in range(1, self.train_n):
             l = self.train_cat.iloc[((i-1)*self.batch_size):(i*self.batch_size), :]
-            x = self.train_dat.iloc[((i-1)*self.batch_size):(i*self.batch_size), :(4*CONST_LEN)]
+            x = self.train_dat.iloc[((i-1)*self.batch_size):(i*self.batch_size), :-CONST_LEN]
             y = self.train_dat.iloc[((i-1)*self.batch_size):(i*self.batch_size), CONST_LEN:]
             # print(l.shape, x.shape, y.shape)
             yield torch.Tensor(l.to_numpy()), torch.Tensor(x.to_numpy()), torch.Tensor(y.to_numpy())
@@ -131,7 +131,7 @@ class DataLoader:
 
         for i in range(1, self.valid_n):
             l = self.valid_cat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :]
-            x = self.valid_dat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :(4 * CONST_LEN)]
+            x = self.valid_dat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :-CONST_LEN]
             y = self.valid_dat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), CONST_LEN:]
             # print(l.shape, x.shape, y.shape)
             yield torch.Tensor(l.to_numpy()), torch.Tensor(x.to_numpy()), torch.Tensor(y.to_numpy())
@@ -140,7 +140,7 @@ class DataLoader:
 
         for i in range(1, self.test_n):
             l = self.test_cat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :]
-            x = self.test_dat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :(4 * CONST_LEN)]
+            x = self.test_dat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :-CONST_LEN]
             y = self.test_dat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), CONST_LEN:]
             # print(l.shape, x.shape, y.shape)
             yield torch.Tensor(l.to_numpy()), torch.Tensor(x.to_numpy()), torch.Tensor(y.to_numpy())
@@ -149,7 +149,7 @@ class DataLoader:
 
         for i in range(1, self.test_n):
             l = self.test_cat.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :]
-            x = self.test_dat_.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :(4 * CONST_LEN)]
+            x = self.test_dat_.iloc[((i - 1) * self.batch_size):(i * self.batch_size), :-CONST_LEN]
             y = self.test_dat_.iloc[((i - 1) * self.batch_size):(i * self.batch_size), CONST_LEN:]
             # print(l.shape, x.shape, y.shape)
             yield torch.Tensor(l.to_numpy()), torch.Tensor(x.to_numpy()), torch.Tensor(y.to_numpy())
@@ -164,7 +164,7 @@ class DataLoader:
         # convert categorical variables to dummies
         cat = pd.concat([pd.get_dummies(dat_cat.iloc[:, j]) for j in range(5)], axis=1)
         # standardize x
-        x = (dat.iloc[:, 6:] - self.mu[:(4*CONST_LEN)]) / self.scale[:(4*CONST_LEN)]
+        x = (dat.iloc[:, 6:] - self.mu[:-CONST_LEN]) / self.scale[:-CONST_LEN]
         # create y
         dat_y = x.iloc[:, CONST_LEN:]
         y = pd.concat([dat_y, pd.DataFrame(np.zeros((n, 28)))], axis=1)

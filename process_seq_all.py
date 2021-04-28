@@ -2,7 +2,7 @@ import pandas as pd
 
 dat_eval = pd.read_csv("dataset/sales_train_evaluation.csv")
 dat_valid = pd.read_csv("dataset/sales_train_validation.csv")
-# dat_price = pd.read_csv("selling_price_seq.csv")
+dat_price = pd.read_csv("dataset/selling_price_seq.csv")
 
 seq_valid = dat_valid.iloc[:, 6:]
 seq_eval = dat_eval.iloc[:, 6:]
@@ -19,7 +19,7 @@ def get_predictor(dat):
     for i in range(n):
         print(i)
         # cnt = (m - start[i]) // CONST_LEN
-        x.append(dat.iloc[i, (-4 * CONST_LEN):].tolist())
+        x.append(dat.iloc[i, (-8 * CONST_LEN):].tolist())
 
     output_x = pd.DataFrame(x)
     output_x = pd.concat([dat.iloc[:, :6], output_x], axis=1)
@@ -40,10 +40,10 @@ def create_data_set(dat, start):
         print(i)
         cnt = (m - start[i]) // CONST_LEN
         cat_vec = dat.iloc[i, 1:6].tolist()
-        for k in range(cnt-4): # 4=5-1
+        for k in range(cnt-7): # 5/8-1
             # print(sum(dat.iloc[i,:].isnull()))
-            if k: x.append(dat.iloc[i, (-(k+5)*CONST_LEN):(-k*CONST_LEN)].tolist())
-            else: x.append(dat.iloc[i, (-5*CONST_LEN):].tolist())
+            if k: x.append(dat.iloc[i, (-(k+8)*CONST_LEN):(-k*CONST_LEN)].tolist())
+            else: x.append(dat.iloc[i, (-8*CONST_LEN):].tolist())
             cat.append(cat_vec.copy())
     # print(cat[0], len(cat))
     # print(x[0], len(x))
@@ -51,11 +51,11 @@ def create_data_set(dat, start):
     return output_x
 
 
-if False:
+if True:
     start_ls = dat_price.iloc[:, -1].tolist()
     x = create_data_set(dat=dat_valid, start=start_ls)
     if x is not None:
-        x.to_csv("valid_X.csv", index=False)
+        x.to_csv("train_X.csv", index=False)
     else:
         print("Error: x is None.")
 
