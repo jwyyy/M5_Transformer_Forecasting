@@ -46,7 +46,7 @@ def get_mask(seq_len=4*CONST_LEN, random=False):
     else:
         pos = randint(0, seq_len-1)
         tar_mask[pos:] = [0] * (seq_len - pos)
-    return torch.Tensor(src_mask), torch.Tensor(tar_mask)
+    return torch.Tensor([src_mask]), torch.Tensor([tar_mask])
 
 
 def create_small_dataset(data_file, csv_name="small_X.csv", size=1000):
