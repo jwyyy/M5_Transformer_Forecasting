@@ -23,7 +23,7 @@ def compute_loss(y, pred, scale, mask):
     batch, seq_len = diff.size()
     if mask is None:
         return torch.sum(diff**2) / (batch * seq_len)
-    mask = 1 - mask.unsqueeze(-1)
+    mask = 1 - mask.transpose(0,1)
     return torch.sum(torch.matmul(diff**2, mask)) / (batch * torch.sum(mask))
 
 
@@ -34,7 +34,7 @@ def compute_prediction_loss(y, pred, scale, mask):
     batch, seq_len = diff.size()
     if mask is None:
         return torch.sum(diff) / (batch * seq_len)
-    mask = 1 - mask.unsqueeze(-1)
+    mask = 1 - mask.transpose(0,1)
     return torch.sum(torch.matmul(diff, mask)) / (batch * torch.sum(mask))
 
 
