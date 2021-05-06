@@ -173,7 +173,7 @@ class DataLoader:
             end = min(i + self.batch_size, n)
             yield dat_id[i:end], torch.Tensor(cat.iloc[i:end, :].to_numpy()), \
                   torch.Tensor(x.iloc[i:end, :].to_numpy()), torch.Tensor(y.iloc[i:end, :].to_numpy())
-            i = end + 1
+            i = end
 
 
 
